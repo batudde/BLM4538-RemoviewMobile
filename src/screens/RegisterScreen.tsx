@@ -18,7 +18,6 @@ export function RegisterScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleRegister() {
@@ -33,10 +32,11 @@ export function RegisterScreen({ navigation }: Props) {
     try {
       setLoading(true);
       setError(null);
-      setMessage(null);
       await register({ email: trimmedEmail, password: trimmedPassword });
-      setMessage('Kayit basarili. Simdi giris yapabilirsin.');
-      navigation.navigate('Login');
+      navigation.navigate('Login', {
+        registeredEmail: trimmedEmail,
+        registeredMessage: 'Kayit basarili. Simdi giris yapabilirsin.',
+      });
     } catch (registerError) {
       setError(registerError instanceof Error ? registerError.message : 'Kayit tamamlanamadi.');
     } finally {
@@ -78,7 +78,6 @@ export function RegisterScreen({ navigation }: Props) {
               />
 
               {error ? <Text style={styles.error}>{error}</Text> : null}
-              {message ? <Text style={styles.message}>{message}</Text> : null}
 
               <PrimaryButton title="Kayit Ol" loading={loading} onPress={handleRegister} />
 
@@ -121,11 +120,6 @@ const styles = StyleSheet.create({
   },
   error: {
     color: colors.warning,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  message: {
-    color: colors.success,
     fontSize: 13,
     lineHeight: 20,
   },

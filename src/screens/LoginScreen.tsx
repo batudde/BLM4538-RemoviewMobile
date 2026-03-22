@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,12 +13,32 @@ import { AuthStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-export function LoginScreen({ navigation }: Props) {
+export function LoginScreen({ navigation, route }: Props) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!route.params) {
+      return;
+    }
+
+    if (route.params.registeredEmail) {
+      setEmail(route.params.registeredEmail);
+    }
+
+    if (route.params.registeredMessage) {
+      setMessage(route.params.registeredMessage);
+    }
+
+    navigation.setParams({
+      registeredEmail: undefined,
+      registeredMessage: undefined,
+    });
+  }, [navigation, route.params]);
 
   async function handleLogin() {
     const trimmedEmail = email.trim();
@@ -32,6 +52,7 @@ export function LoginScreen({ navigation }: Props) {
     try {
       setLoading(true);
       setError(null);
+      setMessage(null);
       await login({ email: trimmedEmail, password: trimmedPassword });
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Giris yapilamadi.');
@@ -74,6 +95,7 @@ export function LoginScreen({ navigation }: Props) {
               />
 
               {error ? <Text style={styles.error}>{error}</Text> : null}
+              {message ? <Text style={styles.message}>{message}</Text> : null}
 
               <PrimaryButton title="Giris Yap" loading={loading} onPress={handleLogin} />
 
@@ -116,6 +138,11 @@ const styles = StyleSheet.create({
   },
   error: {
     color: colors.warning,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  message: {
+    color: colors.success,
     fontSize: 13,
     lineHeight: 20,
   },

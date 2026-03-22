@@ -1,5 +1,10 @@
 export type AuthStackParamList = {
-  Login: undefined;
+  Login:
+    | {
+        registeredEmail?: string;
+        registeredMessage?: string;
+      }
+    | undefined;
   Register: undefined;
 };
 
