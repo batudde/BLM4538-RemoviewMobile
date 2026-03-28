@@ -1,5 +1,6 @@
 # BLM4538-Remoview
-28.03.2026 - V2 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-28.03.2026-V2):
+28.03.2026 - V2 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-28.03.2026-V2): https://youtu.be/hmM4diUB1TU
+
 22.03.2026 - V1 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-22.03.2026-V1): https://youtu.be/qXAMpX2xh68
 
 28.03.2026 Tarihli 22290502-Batuhan Dede-IOS2 Dersi-28.03.2026-V2 Videosundaki İlerlemeler:
