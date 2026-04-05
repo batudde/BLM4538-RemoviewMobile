@@ -1,3 +1,4 @@
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,8 +18,11 @@ import { useAuth } from '../context/AuthContext';
 import { getFilms } from '../services/filmService';
 import { colors } from '../theme/colors';
 import { Film } from '../types/film';
+import { RootStackParamList } from '../types/navigation';
 
-export function HomeScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+
+export function HomeScreen({ navigation }: Props) {
   const { logout } = useAuth();
   const [films, setFilms] = useState<Film[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +54,10 @@ export function HomeScreen() {
 
   const featuredFilm = films.find((film) => film.posterUrl) ?? films[0] ?? null;
 
+  function openFilmDetail(filmId: number) {
+    navigation.navigate('FilmDetail', { filmId });
+  }
+
   function renderHeader() {
     return (
       <View style={styles.headerBlock}>
@@ -64,7 +72,7 @@ export function HomeScreen() {
         </View>
 
         {featuredFilm ? (
-          <View style={styles.featuredCard}>
+          <Pressable onPress={() => openFilmDetail(featuredFilm.id)} style={styles.featuredCard}>
             {featuredFilm.posterUrl ? (
               <Image
                 source={{ uri: featuredFilm.posterUrl }}
@@ -90,8 +98,10 @@ export function HomeScreen() {
                 <Text style={styles.featuredTitle}>{featuredFilm.title}</Text>
 
                 <View style={styles.featuredMetaRow}>
-                  <Text style={styles.featuredRating}>★ {featuredFilm.averageRating.toFixed(1)}</Text>
-                  <Text style={styles.featuredArrow}>›</Text>
+                  <Text style={styles.featuredRating}>
+                    Puan {featuredFilm.averageRating.toFixed(1)}
+                  </Text>
+                  <Text style={styles.featuredArrow}>{'>'}</Text>
                 </View>
 
                 <View style={styles.genreRow}>
@@ -106,14 +116,13 @@ export function HomeScreen() {
                 </View>
               </View>
             </View>
-          </View>
+          </Pressable>
         ) : (
           <View style={styles.heroCard}>
-            <Text style={styles.heroEyebrow}>WEEK 3</Text>
+            <Text style={styles.heroEyebrow}>WEEK 4</Text>
             <Text style={styles.heroTitle}>Featured movie yakinda</Text>
             <Text style={styles.heroText}>
-              Film listesi geldigi anda burada eski mobil uygulamadaki gibi one cikan film
-              gorunecek.
+              Film listesi geldigi anda burada one cikan film gorunecek.
             </Text>
           </View>
         )}
@@ -128,7 +137,7 @@ export function HomeScreen() {
 
   function renderFilmCard({ item }: ListRenderItemInfo<Film>) {
     return (
-      <View style={styles.movieCard}>
+      <Pressable onPress={() => openFilmDetail(item.id)} style={styles.movieCard}>
         <Poster title={item.title} posterUrl={item.posterUrl} />
 
         <View style={styles.movieMeta}>
@@ -141,7 +150,7 @@ export function HomeScreen() {
         <View style={styles.ratingPill}>
           <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
         </View>
-      </View>
+      </Pressable>
     );
   }
 
@@ -210,13 +219,7 @@ type PosterProps = {
 
 function Poster({ title, posterUrl }: PosterProps) {
   if (posterUrl) {
-    return (
-      <Image
-        source={{ uri: posterUrl }}
-        style={styles.poster}
-        resizeMode="cover"
-      />
-    );
+    return <Image source={{ uri: posterUrl }} style={styles.poster} resizeMode="cover" />;
   }
 
   return (
@@ -355,9 +358,8 @@ const styles = StyleSheet.create({
   },
   featuredArrow: {
     color: colors.accent,
-    fontSize: 30,
-    fontWeight: '700',
-    lineHeight: 30,
+    fontSize: 28,
+    fontWeight: '800',
   },
   genreRow: {
     flexDirection: 'row',

@@ -10,4 +10,7 @@ export type AuthStackParamList = {
 
 export type RootStackParamList = {
   Home: undefined;
+  FilmDetail: {
+    filmId: number;
+  };
 };
