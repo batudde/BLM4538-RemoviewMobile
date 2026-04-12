@@ -7,12 +7,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
-import { getFilmDetail } from '../services/filmService';
+import { addRating, addReview, getFilmDetail } from '../services/filmService';
 import { colors } from '../theme/colors';
 import { FilmDetail } from '../types/film';
 import { RootStackParamList } from '../types/navigation';
@@ -23,6 +24,12 @@ export function FilmDetailScreen({ navigation, route }: Props) {
   const [film, setFilm] = useState<FilmDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedbackType, setFeedbackType] = useState<'success' | 'error' | null>(null);
 
   useEffect(() => {
     loadFilm();
@@ -38,6 +45,53 @@ export function FilmDetailScreen({ navigation, route }: Props) {
       setError(loadError instanceof Error ? loadError.message : 'Film detayi alinamadi.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRatingSubmit() {
+    if (!selectedRating) {
+      setFeedbackType('error');
+      setFeedback('Lutfen 1 ile 5 arasinda bir puan sec.');
+      return;
+    }
+
+    try {
+      setRatingLoading(true);
+      setFeedback(null);
+      await addRating(route.params.filmId, selectedRating);
+      setFeedbackType('success');
+      setFeedback('Puan basariyla gonderildi.');
+      await loadFilm();
+    } catch (submitError) {
+      setFeedbackType('error');
+      setFeedback(submitError instanceof Error ? submitError.message : 'Puan gonderilemedi.');
+    } finally {
+      setRatingLoading(false);
+    }
+  }
+
+  async function handleReviewSubmit() {
+    const comment = reviewText.trim();
+
+    if (!comment) {
+      setFeedbackType('error');
+      setFeedback('Lutfen yorum alani bos birakma.');
+      return;
+    }
+
+    try {
+      setReviewLoading(true);
+      setFeedback(null);
+      await addReview(route.params.filmId, comment);
+      setReviewText('');
+      setFeedbackType('success');
+      setFeedback('Yorum onaya gonderildi. Onaylaninca listede gorunecek.');
+      await loadFilm();
+    } catch (submitError) {
+      setFeedbackType('error');
+      setFeedback(submitError instanceof Error ? submitError.message : 'Yorum gonderilemedi.');
+    } finally {
+      setReviewLoading(false);
     }
   }
 
@@ -93,6 +147,71 @@ export function FilmDetailScreen({ navigation, route }: Props) {
                   Bu backend yapisinda ozet alani olmadigi icin bu ekranda afis, turler ve ortalama
                   puan gosteriliyor.
                 </Text>
+
+                <Text style={styles.sectionLabel}>Bu filme puan ver</Text>
+                <View style={styles.ratingSelectorRow}>
+                  {[1, 2, 3, 4, 5].map((value) => {
+                    const selected = selectedRating === value;
+
+                    return (
+                      <Pressable
+                        key={value}
+                        onPress={() => setSelectedRating(value)}
+                        style={[styles.ratingOption, selected ? styles.ratingOptionSelected : null]}
+                      >
+                        <Text
+                          style={[
+                            styles.ratingOptionText,
+                            selected ? styles.ratingOptionTextSelected : null,
+                          ]}
+                        >
+                          {value}★
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Pressable
+                  onPress={handleRatingSubmit}
+                  disabled={ratingLoading}
+                  style={[styles.actionButton, styles.ratingButton]}
+                >
+                  <Text style={styles.actionButtonText}>
+                    {ratingLoading ? 'Gonderiliyor...' : 'Puan Ver'}
+                  </Text>
+                </Pressable>
+
+                <Text style={styles.sectionLabel}>Yorum yap</Text>
+                <TextInput
+                  multiline
+                  numberOfLines={4}
+                  value={reviewText}
+                  onChangeText={setReviewText}
+                  placeholder="Bu film hakkindaki yorumunu yaz..."
+                  placeholderTextColor={colors.textMuted}
+                  style={styles.commentInput}
+                  textAlignVertical="top"
+                />
+                <Pressable
+                  onPress={handleReviewSubmit}
+                  disabled={reviewLoading}
+                  style={[styles.actionButton, styles.reviewButton]}
+                >
+                  <Text style={styles.actionButtonText}>
+                    {reviewLoading ? 'Gonderiliyor...' : 'Yorumu Gonder'}
+                  </Text>
+                </Pressable>
+
+                {feedback ? (
+                  <Text
+                    style={[
+                      styles.feedbackText,
+                      feedbackType === 'success' ? styles.feedbackSuccess : styles.feedbackError,
+                    ]}
+                  >
+                    {feedback}
+                  </Text>
+                ) : null}
 
                 <Text style={styles.sectionLabel}>Yorumlar</Text>
                 {film.reviews.length > 0 ? (
@@ -229,6 +348,71 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 12,
     fontWeight: '700',
+  },
+  ratingSelectorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  ratingOption: {
+    minWidth: 54,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  ratingOptionSelected: {
+    backgroundColor: 'rgba(244,63,94,0.18)',
+    borderColor: 'rgba(244,63,94,0.44)',
+  },
+  ratingOptionText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  ratingOptionTextSelected: {
+    color: colors.primaryStrong,
+  },
+  commentInput: {
+    minHeight: 120,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    color: colors.text,
+    lineHeight: 22,
+  },
+  actionButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  ratingButton: {
+    backgroundColor: 'rgba(180,48,63,0.92)',
+  },
+  reviewButton: {
+    backgroundColor: 'rgba(15,142,93,0.92)',
+  },
+  actionButtonText: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  feedbackText: {
+    lineHeight: 22,
+    fontWeight: '700',
+  },
+  feedbackSuccess: {
+    color: '#5DE1A8',
+  },
+  feedbackError: {
+    color: '#FFB4B4',
   },
   reviewList: {
     gap: 12,
