@@ -1,5 +1,7 @@
 # BLM4538-Remoview
 
+Proje Dokümanı (Repoda da mevcut): https://drive.google.com/file/d/1qMeciKfsvYu6Po6w2EM5qEiRwa8FSI8N/view?usp=sharing
+
 03.05.2026 - V5 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-03.05.2026-V5):
 https://youtu.be/QLneU4OS81w
 
