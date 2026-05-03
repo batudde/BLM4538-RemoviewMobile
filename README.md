@@ -1,4 +1,8 @@
 # BLM4538-Remoview
+
+04.05.2026 - V5 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-03.05.2026-V5):
+https://youtu.be/QLneU4OS81w
+
 12.04.2026 - V4 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-12.04.2026-V4):
 https://youtu.be/HJMU0hAufww
 
@@ -8,6 +12,10 @@ https://youtu.be/PXCBP-Cj7lY
 28.03.2026 - V2 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-28.03.2026-V2): https://youtu.be/hmM4diUB1TU
 
 22.03.2026 - V1 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-22.03.2026-V1): https://youtu.be/qXAMpX2xh68
+
+
+03.05.2026 Tarihli 22290502-Batuhan Dede - IOS2 Dersi-03.05.2026-V5 Videosundaki İlerlemeler:
+Bu hafta projede kullanıcıların mobil uygulama üzerinden film ekleyebilmesi için film ekleme modülünü geliştirdim.Bu geliştirme için yeni bir AddFilmScreen oluşturdum. Bu ekran film adı, opsiyonel poster URL’i ve tür seçimi alanlarından oluşuyor. Kullanıcı filmi eklerken en az bir tür seçmek zorunda. Film adı da boş veya çok kısa girilirse kullanıcıya hata mesajı gösteriliyor. Film ekleme ekranında türleri sabit yazmadım. Backend tarafındaki /api/genres endpointinden dinamik olarak çekiyorum. Böylece backend’e yeni tür eklendiğinde mobil uygulama tarafında ekstra kod değişikliği yapmadan türler otomatik olarak ekranda görünebiliyor.
 
 
 
