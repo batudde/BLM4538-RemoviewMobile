@@ -12,6 +12,24 @@ export async function getFilmDetail(filmId: number) {
   return mapFilmDetail(data);
 }
 
+export async function createFilm(input: {
+  title: string;
+  posterUrl: string | null;
+  genreIds: number[];
+}) {
+  const { token } = await getSession();
+
+  if (!token) {
+    throw new Error('Oturum bulunamadi. Lutfen tekrar giris yap.');
+  }
+
+  return request<{ Message?: string; message?: string }>('/api/films', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(input),
+  });
+}
+
 export async function addRating(filmId: number, value: number) {
   const { token } = await getSession();
 

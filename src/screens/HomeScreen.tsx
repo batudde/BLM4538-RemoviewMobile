@@ -1,5 +1,6 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -33,6 +34,12 @@ export function HomeScreen({ navigation }: Props) {
     loadFilms();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadFilms();
+    }, []),
+  );
+
   async function loadFilms(isRefresh = false) {
     try {
       if (isRefresh) {
@@ -58,18 +65,35 @@ export function HomeScreen({ navigation }: Props) {
     navigation.navigate('FilmDetail', { filmId });
   }
 
+  function openAddFilm() {
+    navigation.navigate('AddFilm');
+  }
+
   function renderHeader() {
     return (
       <View style={styles.headerBlock}>
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerCopy}>
             <Text style={styles.title}>Remoview</Text>
             <Text style={styles.subtitle}>Kesfet | Puanla | Yorum yap</Text>
           </View>
-          <Pressable onPress={logout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Cikis</Text>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable onPress={openAddFilm} style={styles.iconButton}>
+              <Text style={styles.iconButtonText}>+</Text>
+            </Pressable>
+            <Pressable onPress={logout} style={styles.logoutButton}>
+              <Text style={styles.logoutText}>Cikis</Text>
+            </Pressable>
+          </View>
         </View>
+
+        <Pressable onPress={openAddFilm} style={styles.searchBar}>
+          <Text style={styles.searchIcon}>+</Text>
+          <Text style={styles.searchPlaceholder}>Film eklemek icin dokun</Text>
+          <View style={styles.searchAddBadge}>
+            <Text style={styles.searchAddBadgeText}>Yeni</Text>
+          </View>
+        </Pressable>
 
         {featuredFilm ? (
           <Pressable onPress={() => openFilmDetail(featuredFilm.id)} style={styles.featuredCard}>
@@ -207,6 +231,9 @@ export function HomeScreen({ navigation }: Props) {
           }
           showsVerticalScrollIndicator={false}
         />
+        <Pressable onPress={openAddFilm} style={styles.fab}>
+          <Text style={styles.fabText}>+</Text>
+        </Pressable>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -246,6 +273,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  headerCopy: {
+    flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginLeft: 12,
+  },
   title: {
     color: colors.text,
     fontSize: 34,
@@ -255,6 +291,22 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 4,
     fontSize: 14,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  iconButtonText: {
+    color: colors.text,
+    fontSize: 24,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   logoutButton: {
     paddingHorizontal: 14,
@@ -267,6 +319,38 @@ const styles = StyleSheet.create({
   logoutText: {
     color: colors.text,
     fontWeight: '700',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  searchIcon: {
+    color: colors.textMuted,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  searchPlaceholder: {
+    flex: 1,
+    color: colors.textMuted,
+    fontSize: 14,
+  },
+  searchAddBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(244,63,94,0.18)',
+  },
+  searchAddBadgeText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '800',
   },
   heroCard: {
     padding: 22,
@@ -477,5 +561,27 @@ const styles = StyleSheet.create({
   retryText: {
     color: colors.text,
     fontWeight: '800',
+  },
+  fab: {
+    position: 'absolute',
+    right: 22,
+    bottom: 26,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#7C3AED',
+    shadowColor: '#7C3AED',
+    shadowOpacity: 0.34,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 12,
+  },
+  fabText: {
+    color: colors.text,
+    fontSize: 30,
+    lineHeight: 30,
+    fontWeight: '700',
   },
 });

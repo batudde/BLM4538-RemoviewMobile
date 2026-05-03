@@ -13,4 +13,5 @@ export type RootStackParamList = {
   FilmDetail: {
     filmId: number;
   };
+  AddFilm: undefined;
 };
