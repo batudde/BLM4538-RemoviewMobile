@@ -7,6 +7,20 @@ export async function getFilms() {
   return data.map(mapFilm);
 }
 
+export async function getFavorites() {
+  const { token } = await getSession();
+
+  if (!token) {
+    throw new Error('Oturum bulunamadi. Lutfen tekrar giris yap.');
+  }
+
+  const data = await request<Array<Partial<Film> & Record<string, unknown>>>('/api/favorites', {
+    token,
+  });
+
+  return data.map(mapFilm);
+}
+
 export async function getFilmDetail(filmId: number) {
   const data = await request<Partial<FilmDetail> & Record<string, unknown>>(`/api/films/${filmId}`);
   return mapFilmDetail(data);

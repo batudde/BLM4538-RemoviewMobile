@@ -69,6 +69,10 @@ export function HomeScreen({ navigation }: Props) {
     navigation.navigate('AddFilm');
   }
 
+  function openProfile() {
+    navigation.navigate('Profile');
+  }
+
   function renderHeader() {
     return (
       <View style={styles.headerBlock}>
@@ -78,11 +82,11 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.subtitle}>Kesfet | Puanla | Yorum yap</Text>
           </View>
           <View style={styles.headerActions}>
-            <Pressable onPress={openAddFilm} style={styles.iconButton}>
-              <Text style={styles.iconButtonText}>+</Text>
-            </Pressable>
             <Pressable onPress={logout} style={styles.logoutButton}>
               <Text style={styles.logoutText}>Cikis</Text>
+            </Pressable>
+            <Pressable onPress={openProfile} style={styles.iconButton}>
+              <Text style={styles.iconButtonText}>P</Text>
             </Pressable>
           </View>
         </View>

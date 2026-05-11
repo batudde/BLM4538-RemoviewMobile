@@ -14,4 +14,5 @@ export type RootStackParamList = {
     filmId: number;
   };
   AddFilm: undefined;
+  Profile: undefined;
 };
