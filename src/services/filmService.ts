@@ -21,6 +21,32 @@ export async function getFavorites() {
   return data.map(mapFilm);
 }
 
+export async function addFavorite(filmId: number) {
+  const { token } = await getSession();
+
+  if (!token) {
+    throw new Error('Oturum bulunamadi. Lutfen tekrar giris yap.');
+  }
+
+  return request(`/api/favorites/${filmId}`, {
+    method: 'POST',
+    token,
+  });
+}
+
+export async function removeFavorite(filmId: number) {
+  const { token } = await getSession();
+
+  if (!token) {
+    throw new Error('Oturum bulunamadi. Lutfen tekrar giris yap.');
+  }
+
+  return request(`/api/favorites/${filmId}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
 export async function getFilmDetail(filmId: number) {
   const data = await request<Partial<FilmDetail> & Record<string, unknown>>(`/api/films/${filmId}`);
   return mapFilmDetail(data);

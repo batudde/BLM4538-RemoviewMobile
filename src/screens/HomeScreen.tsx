@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useAuth } from '../context/AuthContext';
-import { getFilms } from '../services/filmService';
+import { addFavorite, getFavorites, getFilms, removeFavorite } from '../services/filmService';
 import { colors } from '../theme/colors';
 import { Film } from '../types/film';
 import { RootStackParamList } from '../types/navigation';
@@ -26,8 +26,10 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 export function HomeScreen({ navigation }: Props) {
   const { logout } = useAuth();
   const [films, setFilms] = useState<Film[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [favoriteLoadingId, setFavoriteLoadingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,8 +51,9 @@ export function HomeScreen({ navigation }: Props) {
       }
 
       setError(null);
-      const nextFilms = await getFilms();
+      const [nextFilms, favorites] = await Promise.all([getFilms(), getFavorites()]);
       setFilms(nextFilms);
+      setFavoriteIds(favorites.map((favorite) => favorite.id));
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Filmler alinamadi.');
     } finally {
@@ -71,6 +74,26 @@ export function HomeScreen({ navigation }: Props) {
 
   function openProfile() {
     navigation.navigate('Profile');
+  }
+
+  async function toggleFavorite(filmId: number) {
+    const isFavorite = favoriteIds.includes(filmId);
+
+    try {
+      setFavoriteLoadingId(filmId);
+
+      if (isFavorite) {
+        await removeFavorite(filmId);
+        setFavoriteIds((current) => current.filter((id) => id !== filmId));
+      } else {
+        await addFavorite(filmId);
+        setFavoriteIds((current) => [...current, filmId]);
+      }
+    } catch {
+      // Home ekraninda sessiz kalsin; detay ekranda daha acik geri bildirim var.
+    } finally {
+      setFavoriteLoadingId(null);
+    }
   }
 
   function renderHeader() {
@@ -164,21 +187,36 @@ export function HomeScreen({ navigation }: Props) {
   }
 
   function renderFilmCard({ item }: ListRenderItemInfo<Film>) {
+    const isFavorite = favoriteIds.includes(item.id);
+    const isFavoriteLoading = favoriteLoadingId === item.id;
+
     return (
-      <Pressable onPress={() => openFilmDetail(item.id)} style={styles.movieCard}>
-        <Poster title={item.title} posterUrl={item.posterUrl} />
+      <View style={styles.movieCard}>
+        <Pressable onPress={() => openFilmDetail(item.id)} style={styles.movieCardMain}>
+          <Poster title={item.title} posterUrl={item.posterUrl} />
 
-        <View style={styles.movieMeta}>
-          <Text style={styles.movieTitle}>{item.title}</Text>
-          <Text style={styles.movieGenres}>
-            {item.genres.length > 0 ? item.genres.join(' | ') : 'Tur bilgisi yakinda'}
-          </Text>
-        </View>
+          <View style={styles.movieMeta}>
+            <Text style={styles.movieTitle}>{item.title}</Text>
+            <Text style={styles.movieGenres}>
+              {item.genres.length > 0 ? item.genres.join(' | ') : 'Tur bilgisi yakinda'}
+            </Text>
+          </View>
+        </Pressable>
 
-        <View style={styles.ratingPill}>
-          <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
+        <View style={styles.movieActions}>
+          <Pressable
+            onPress={() => toggleFavorite(item.id)}
+            disabled={isFavoriteLoading}
+            style={[styles.favoriteChip, isFavorite ? styles.favoriteChipActive : null]}
+          >
+            <Text style={styles.favoriteChipText}>{isFavorite ? '♥' : '♡'}</Text>
+          </Pressable>
+
+          <View style={styles.ratingPill}>
+            <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
+          </View>
         </View>
-      </Pressable>
+      </View>
     );
   }
 
@@ -490,6 +528,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
   },
+  movieCardMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
   poster: {
     width: 62,
     height: 86,
@@ -519,6 +563,30 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     lineHeight: 19,
+  },
+  movieActions: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  favoriteChip: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  favoriteChipActive: {
+    backgroundColor: 'rgba(244,63,94,0.18)',
+    borderColor: 'rgba(244,63,94,0.44)',
+  },
+  favoriteChipText: {
+    color: colors.primaryStrong,
+    fontSize: 18,
+    fontWeight: '900',
+    lineHeight: 18,
   },
   ratingPill: {
     minWidth: 58,

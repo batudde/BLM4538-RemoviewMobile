@@ -13,7 +13,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
-import { addRating, addReview, getFilmDetail } from '../services/filmService';
+import {
+  addFavorite,
+  addRating,
+  addReview,
+  getFavorites,
+  getFilmDetail,
+  removeFavorite,
+} from '../services/filmService';
 import { colors } from '../theme/colors';
 import { FilmDetail } from '../types/film';
 import { RootStackParamList } from '../types/navigation';
@@ -24,6 +31,8 @@ export function FilmDetailScreen({ navigation, route }: Props) {
   const [film, setFilm] = useState<FilmDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [ratingLoading, setRatingLoading] = useState(false);
   const [reviewText, setReviewText] = useState('');
@@ -39,12 +48,42 @@ export function FilmDetailScreen({ navigation, route }: Props) {
     try {
       setLoading(true);
       setError(null);
-      const nextFilm = await getFilmDetail(route.params.filmId);
+      const [nextFilm, favorites] = await Promise.all([
+        getFilmDetail(route.params.filmId),
+        getFavorites(),
+      ]);
       setFilm(nextFilm);
+      setIsFavorite(favorites.some((favorite) => favorite.id === route.params.filmId));
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Film detayi alinamadi.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleFavoriteToggle() {
+    try {
+      setFavoriteLoading(true);
+      setFeedback(null);
+
+      if (isFavorite) {
+        await removeFavorite(route.params.filmId);
+        setIsFavorite(false);
+        setFeedbackType('success');
+        setFeedback('Film favorilerden cikarildi.');
+      } else {
+        await addFavorite(route.params.filmId);
+        setIsFavorite(true);
+        setFeedbackType('success');
+        setFeedback('Film favorilere eklendi.');
+      }
+    } catch (favoriteError) {
+      setFeedbackType('error');
+      setFeedback(
+        favoriteError instanceof Error ? favoriteError.message : 'Favori islemi tamamlanamadi.',
+      );
+    } finally {
+      setFavoriteLoading(false);
     }
   }
 
@@ -129,8 +168,27 @@ export function FilmDetailScreen({ navigation, route }: Props) {
               <View style={styles.body}>
                 <Text style={styles.title}>{film.title}</Text>
 
-                <View style={styles.ratingBadge}>
-                  <Text style={styles.ratingText}>Puan: {film.averageRating.toFixed(1)}</Text>
+                <View style={styles.topMetaRow}>
+                  <View style={styles.ratingBadge}>
+                    <Text style={styles.ratingText}>Puan: {film.averageRating.toFixed(1)}</Text>
+                  </View>
+
+                  <Pressable
+                    onPress={handleFavoriteToggle}
+                    disabled={favoriteLoading}
+                    style={[
+                      styles.favoriteButton,
+                      isFavorite ? styles.favoriteButtonActive : null,
+                    ]}
+                  >
+                    <Text style={styles.favoriteButtonText}>
+                      {favoriteLoading
+                        ? 'Bekle...'
+                        : isFavorite
+                          ? 'Favoriden Cikar'
+                          : 'Favorilere Ekle'}
+                    </Text>
+                  </Pressable>
                 </View>
 
                 <Text style={styles.sectionLabel}>Turler</Text>
@@ -310,6 +368,13 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     lineHeight: 34,
   },
+  topMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
   ratingBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 14,
@@ -320,6 +385,23 @@ const styles = StyleSheet.create({
   ratingText: {
     color: colors.text,
     fontSize: 15,
+    fontWeight: '800',
+  },
+  favoriteButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  favoriteButtonActive: {
+    backgroundColor: 'rgba(244,63,94,0.18)',
+    borderColor: 'rgba(244,63,94,0.44)',
+  },
+  favoriteButtonText: {
+    color: colors.text,
+    fontSize: 13,
     fontWeight: '800',
   },
   sectionLabel: {

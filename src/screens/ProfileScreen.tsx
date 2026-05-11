@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useAuth } from '../context/AuthContext';
-import { getFavorites } from '../services/filmService';
+import { addFavorite, getFavorites, removeFavorite } from '../services/filmService';
 import { colors } from '../theme/colors';
 import { Film } from '../types/film';
 import { RootStackParamList } from '../types/navigation';
@@ -28,6 +28,7 @@ export function ProfileScreen({ navigation }: Props) {
   const [favorites, setFavorites] = useState<Film[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [favoriteLoadingId, setFavoriteLoadingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const averageFavoriteRating =
     favorites.length > 0
@@ -65,6 +66,24 @@ export function ProfileScreen({ navigation }: Props) {
 
   function openFilmDetail(filmId: number) {
     navigation.navigate('FilmDetail', { filmId });
+  }
+
+  async function toggleFavorite(filmId: number) {
+    const isFavorite = favorites.some((favorite) => favorite.id === filmId);
+
+    try {
+      setFavoriteLoadingId(filmId);
+
+      if (isFavorite) {
+        await removeFavorite(filmId);
+        setFavorites((current) => current.filter((favorite) => favorite.id !== filmId));
+      } else {
+        await addFavorite(filmId);
+        await loadFavorites();
+      }
+    } finally {
+      setFavoriteLoadingId(null);
+    }
   }
 
   function renderHeader() {
@@ -114,21 +133,36 @@ export function ProfileScreen({ navigation }: Props) {
   }
 
   function renderFavoriteCard({ item }: ListRenderItemInfo<Film>) {
+    const isFavorite = favorites.some((favorite) => favorite.id === item.id);
+    const isFavoriteLoading = favoriteLoadingId === item.id;
+
     return (
-      <Pressable onPress={() => openFilmDetail(item.id)} style={styles.favoriteCard}>
-        <Poster title={item.title} posterUrl={item.posterUrl} />
+      <View style={styles.favoriteCard}>
+        <Pressable onPress={() => openFilmDetail(item.id)} style={styles.favoriteCardMain}>
+          <Poster title={item.title} posterUrl={item.posterUrl} />
 
-        <View style={styles.favoriteMeta}>
-          <Text style={styles.favoriteTitle}>{item.title}</Text>
-          <Text style={styles.favoriteGenres}>
-            {item.genres.length > 0 ? item.genres.join(' | ') : 'Tur bilgisi yakinda'}
-          </Text>
-        </View>
+          <View style={styles.favoriteMeta}>
+            <Text style={styles.favoriteTitle}>{item.title}</Text>
+            <Text style={styles.favoriteGenres}>
+              {item.genres.length > 0 ? item.genres.join(' | ') : 'Tur bilgisi yakinda'}
+            </Text>
+          </View>
+        </Pressable>
 
-        <View style={styles.ratingPill}>
-          <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
+        <View style={styles.favoriteActions}>
+          <Pressable
+            onPress={() => toggleFavorite(item.id)}
+            disabled={isFavoriteLoading}
+            style={[styles.favoriteChip, isFavorite ? styles.favoriteChipActive : null]}
+          >
+            <Text style={styles.favoriteChipText}>{isFavorite ? '♥' : '♡'}</Text>
+          </Pressable>
+
+          <View style={styles.ratingPill}>
+            <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
+          </View>
         </View>
-      </Pressable>
+      </View>
     );
   }
 
@@ -342,6 +376,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
   },
+  favoriteCardMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
   poster: {
     width: 62,
     height: 86,
@@ -371,6 +411,30 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     lineHeight: 19,
+  },
+  favoriteActions: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  favoriteChip: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  favoriteChipActive: {
+    backgroundColor: 'rgba(244,63,94,0.18)',
+    borderColor: 'rgba(244,63,94,0.44)',
+  },
+  favoriteChipText: {
+    color: colors.primaryStrong,
+    fontSize: 18,
+    fontWeight: '900',
+    lineHeight: 18,
   },
   ratingPill: {
     minWidth: 58,
