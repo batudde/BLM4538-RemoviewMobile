@@ -2,6 +2,9 @@
 
 Proje Dokümanı (Repoda da mevcut): https://drive.google.com/file/d/1qMeciKfsvYu6Po6w2EM5qEiRwa8FSI8N/view?usp=sharing
 
+14.05.2026 - V7 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-14.05.2026-V7):
+https://youtu.be/tzAZKIS59-M
+
 10.05.2026 - V6 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-10.05.2026-V6):
 https://youtu.be/CjPA5dXW5sc
 
@@ -17,6 +20,9 @@ https://youtu.be/PXCBP-Cj7lY
 28.03.2026 - V2 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-28.03.2026-V2): https://youtu.be/hmM4diUB1TU
 
 22.03.2026 - V1 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-22.03.2026-V1): https://youtu.be/qXAMpX2xh68
+
+14.05.2026 Tarihli 22290502-Batuhan Dede - IOS2 Dersi-14.05.2026-V7 Videosundaki İlerlemeler:
+Bu bölümde projede favorilere ekleme ve favorilerden çıkarma fonksiyonlarını mobil uygulamaya entegre ettim. Daha önce profil ekranında favori listesini backend’den çekebiliyordum. Bu aşamada ise kullanıcıların filmleri doğrudan arayüz üzerinden favorileyebilmesini ve isterlerse tekrar favoriden çıkarabilmesini sağladım.
 
 10.05.2026 Tarihli 22290502-Batuhan Dede - IOS2 Dersi-10.05.2026-V6 Videosundaki İlerlemeler:
 Bu hafta projede 7. haftanın profil sayfası kısmını geliştirdim. Dokümanda bu haftada favorilere ekleme ve çıkarma ile birlikte profil sayfasında favori listesinin dinamik olarak gösterilmesi isteniyordu. Bu hafta özellikle profil ekranını oluşturdum ve kullanıcının favori filmlerini backend’den çekip mobil uygulamada göstermeyi tamamladım. Ek olarak bu hafta veritabanındaki bazı eski film kayıtlarını da düzelttim. Inception, The Matrix ve Shrek filmlerinin tür bilgileri eksikti. Bu filmlere manuel olarak doğru tür eşleştirmelerini ekledim. Böylece artık mobil uygulamada bu filmler de tür bilgileriyle birlikte düzgün şekilde görünüyor.
