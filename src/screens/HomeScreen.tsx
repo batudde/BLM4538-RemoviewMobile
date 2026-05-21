@@ -10,6 +10,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +24,24 @@ import { RootStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
+const ratingFilters = [
+  { label: 'Tum puanlar', value: 0 },
+  { label: '4.5+', value: 4.5 },
+  { label: '4.0+', value: 4 },
+  { label: '3.0+', value: 3 },
+];
+
+const sortOptions = [
+  { label: 'Varsayilan', value: 'default' },
+  { label: 'Puan azalan', value: 'ratingDesc' },
+  { label: 'Puan artan', value: 'ratingAsc' },
+  { label: 'Yorum azalan', value: 'reviewDesc' },
+  { label: 'Yorum artan', value: 'reviewAsc' },
+] as const;
+
+type FilterMenu = 'genre' | 'rating' | 'sort' | null;
+type SortValue = (typeof sortOptions)[number]['value'];
+
 export function HomeScreen({ navigation }: Props) {
   const { logout } = useAuth();
   const [films, setFilms] = useState<Film[]>([]);
@@ -31,6 +50,11 @@ export function HomeScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [favoriteLoadingId, setFavoriteLoadingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('Tum');
+  const [minimumRating, setMinimumRating] = useState(0);
+  const [sortValue, setSortValue] = useState<SortValue>('default');
+  const [openFilterMenu, setOpenFilterMenu] = useState<FilterMenu>(null);
 
   useEffect(() => {
     loadFilms();
@@ -63,6 +87,50 @@ export function HomeScreen({ navigation }: Props) {
   }
 
   const featuredFilm = films.find((film) => film.posterUrl) ?? films[0] ?? null;
+  const availableGenres = Array.from(new Set(films.flatMap((film) => film.genres))).sort((a, b) =>
+    a.localeCompare(b),
+  );
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase('tr-TR');
+  const filteredFilms = films.filter((film) => {
+    const matchesSearch =
+      normalizedQuery.length === 0 ||
+      film.title.toLocaleLowerCase('tr-TR').includes(normalizedQuery) ||
+      film.genres.some((genre) => genre.toLocaleLowerCase('tr-TR').includes(normalizedQuery));
+    const matchesGenre = selectedGenre === 'Tum' || film.genres.includes(selectedGenre);
+    const matchesRating = film.averageRating >= minimumRating;
+
+    return matchesSearch && matchesGenre && matchesRating;
+  });
+  const visibleFilms = [...filteredFilms].sort((first, second) => {
+    if (sortValue === 'ratingDesc') {
+      return second.averageRating - first.averageRating;
+    }
+
+    if (sortValue === 'ratingAsc') {
+      return first.averageRating - second.averageRating;
+    }
+
+    if (sortValue === 'reviewDesc') {
+      return second.reviewCount - first.reviewCount;
+    }
+
+    if (sortValue === 'reviewAsc') {
+      return first.reviewCount - second.reviewCount;
+    }
+
+    return 0;
+  });
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    selectedGenre !== 'Tum' ||
+    minimumRating > 0 ||
+    sortValue !== 'default';
+  const visibleFeaturedFilm =
+    visibleFilms.find((film) => film.posterUrl) ?? visibleFilms[0] ?? featuredFilm;
+  const selectedRatingLabel =
+    ratingFilters.find((filter) => filter.value === minimumRating)?.label ?? 'Tum puanlar';
+  const selectedSortLabel =
+    sortOptions.find((option) => option.value === sortValue)?.label ?? 'Varsayilan';
 
   function openFilmDetail(filmId: number) {
     navigation.navigate('FilmDetail', { filmId });
@@ -74,6 +142,18 @@ export function HomeScreen({ navigation }: Props) {
 
   function openProfile() {
     navigation.navigate('Profile');
+  }
+
+  function clearFilters() {
+    setSearchQuery('');
+    setSelectedGenre('Tum');
+    setMinimumRating(0);
+    setSortValue('default');
+    setOpenFilterMenu(null);
+  }
+
+  function toggleFilterMenu(menu: Exclude<FilterMenu, null>) {
+    setOpenFilterMenu((current) => (current === menu ? null : menu));
   }
 
   async function toggleFavorite(filmId: number) {
@@ -114,26 +194,150 @@ export function HomeScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <Pressable onPress={openAddFilm} style={styles.searchBar}>
-          <Text style={styles.searchIcon}>+</Text>
-          <Text style={styles.searchPlaceholder}>Film eklemek icin dokun</Text>
-          <View style={styles.searchAddBadge}>
-            <Text style={styles.searchAddBadgeText}>Yeni</Text>
-          </View>
-        </Pressable>
+        <View style={styles.searchBar}>
+          <Text style={styles.searchIcon}>Ara</Text>
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Film adi veya tur ara"
+            placeholderTextColor={colors.textMuted}
+            style={styles.searchInput}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.trim().length > 0 ? (
+            <Pressable onPress={() => setSearchQuery('')} style={styles.clearSearchButton}>
+              <Text style={styles.clearSearchText}>x</Text>
+            </Pressable>
+          ) : null}
+        </View>
 
-        {featuredFilm ? (
-          <Pressable onPress={() => openFilmDetail(featuredFilm.id)} style={styles.featuredCard}>
-            {featuredFilm.posterUrl ? (
+        <View style={styles.filterPanel}>
+          <View style={styles.filterHeader}>
+            <Text style={styles.filterTitle}>Filtreler</Text>
+            {hasActiveFilters ? (
+              <Pressable onPress={clearFilters} style={styles.clearFiltersButton}>
+                <Text style={styles.clearFiltersText}>Temizle</Text>
+              </Pressable>
+            ) : null}
+          </View>
+
+          <View style={styles.filterButtons}>
+            <Pressable onPress={() => toggleFilterMenu('genre')} style={styles.filterButton}>
+              <Text style={styles.filterButtonLabel}>Tur</Text>
+              <Text style={styles.filterButtonValue}>{selectedGenre}</Text>
+            </Pressable>
+
+            <Pressable onPress={() => toggleFilterMenu('rating')} style={styles.filterButton}>
+              <Text style={styles.filterButtonLabel}>Puan</Text>
+              <Text style={styles.filterButtonValue}>{selectedRatingLabel}</Text>
+            </Pressable>
+
+            <Pressable onPress={() => toggleFilterMenu('sort')} style={styles.filterButton}>
+              <Text style={styles.filterButtonLabel}>Sirala</Text>
+              <Text style={styles.filterButtonValue}>{selectedSortLabel}</Text>
+            </Pressable>
+          </View>
+
+          {openFilterMenu === 'genre' ? (
+            <View style={styles.optionList}>
+              {['Tum', ...availableGenres].map((genre) => (
+                <Pressable
+                  key={genre}
+                  onPress={() => {
+                    setSelectedGenre(genre);
+                    setOpenFilterMenu(null);
+                  }}
+                  style={[
+                    styles.optionRow,
+                    selectedGenre === genre ? styles.optionRowActive : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      selectedGenre === genre ? styles.optionTextActive : null,
+                    ]}
+                  >
+                    {genre}
+                  </Text>
+                  {selectedGenre === genre ? <Text style={styles.optionCheck}>Secili</Text> : null}
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+
+          {openFilterMenu === 'rating' ? (
+            <View style={styles.optionList}>
+              {ratingFilters.map((filter) => (
+                <Pressable
+                  key={filter.label}
+                  onPress={() => {
+                    setMinimumRating(filter.value);
+                    setOpenFilterMenu(null);
+                  }}
+                  style={[
+                    styles.optionRow,
+                    minimumRating === filter.value ? styles.optionRowActive : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      minimumRating === filter.value ? styles.optionTextActive : null,
+                    ]}
+                  >
+                    {filter.label}
+                  </Text>
+                  {minimumRating === filter.value ? (
+                    <Text style={styles.optionCheck}>Secili</Text>
+                  ) : null}
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+
+          {openFilterMenu === 'sort' ? (
+            <View style={styles.optionList}>
+              {sortOptions.map((option) => (
+                <Pressable
+                  key={option.value}
+                  onPress={() => {
+                    setSortValue(option.value);
+                    setOpenFilterMenu(null);
+                  }}
+                  style={[
+                    styles.optionRow,
+                    sortValue === option.value ? styles.optionRowActive : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      sortValue === option.value ? styles.optionTextActive : null,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                  {sortValue === option.value ? <Text style={styles.optionCheck}>Secili</Text> : null}
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+        </View>
+
+        {visibleFeaturedFilm ? (
+          <Pressable onPress={() => openFilmDetail(visibleFeaturedFilm.id)} style={styles.featuredCard}>
+            {visibleFeaturedFilm.posterUrl ? (
               <Image
-                source={{ uri: featuredFilm.posterUrl }}
+                source={{ uri: visibleFeaturedFilm.posterUrl }}
                 style={styles.featuredPoster}
                 resizeMode="cover"
               />
             ) : (
               <View style={[styles.featuredPoster, styles.featuredPosterFallback]}>
                 <Text style={styles.featuredPosterLetter}>
-                  {featuredFilm.title.charAt(0).toUpperCase()}
+                  {visibleFeaturedFilm.title.charAt(0).toUpperCase()}
                 </Text>
               </View>
             )}
@@ -146,18 +350,18 @@ export function HomeScreen({ navigation }: Props) {
               </View>
 
               <View style={styles.featuredBottom}>
-                <Text style={styles.featuredTitle}>{featuredFilm.title}</Text>
+                <Text style={styles.featuredTitle}>{visibleFeaturedFilm.title}</Text>
 
                 <View style={styles.featuredMetaRow}>
                   <Text style={styles.featuredRating}>
-                    Puan {featuredFilm.averageRating.toFixed(1)}
+                    Puan {visibleFeaturedFilm.averageRating.toFixed(1)}
                   </Text>
                   <Text style={styles.featuredArrow}>{'>'}</Text>
                 </View>
 
                 <View style={styles.genreRow}>
-                  {(featuredFilm.genres.length > 0
-                    ? featuredFilm.genres.slice(0, 3)
+                  {(visibleFeaturedFilm.genres.length > 0
+                    ? visibleFeaturedFilm.genres.slice(0, 3)
                     : ['Tur yok']
                   ).map((genre) => (
                     <View key={genre} style={styles.genreChip}>
@@ -180,7 +384,9 @@ export function HomeScreen({ navigation }: Props) {
 
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>Film Listesi</Text>
-          <Text style={styles.sectionBadge}>{films.length} film</Text>
+          <Text style={styles.sectionBadge}>
+            {visibleFilms.length}/{films.length} film
+          </Text>
         </View>
       </View>
     );
@@ -243,6 +449,20 @@ export function HomeScreen({ navigation }: Props) {
       );
     }
 
+    if (hasActiveFilters) {
+      return (
+        <View style={styles.stateCard}>
+          <Text style={styles.stateTitle}>Filtreye uygun film yok</Text>
+          <Text style={styles.stateText}>
+            Arama metnini, tur secimini veya puan filtresini degistirerek tekrar deneyebilirsin.
+          </Text>
+          <Pressable onPress={clearFilters} style={styles.retryButton}>
+            <Text style={styles.retryText}>Filtreleri temizle</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.stateCard}>
         <Text style={styles.stateTitle}>Henuz onayli film yok</Text>
@@ -257,7 +477,7 @@ export function HomeScreen({ navigation }: Props) {
     <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <FlatList
-          data={films}
+          data={visibleFilms}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderFilmCard}
           ListHeaderComponent={renderHeader}
@@ -367,7 +587,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    minHeight: 54,
     borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
@@ -378,21 +598,119 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
   },
-  searchPlaceholder: {
+  searchInput: {
     flex: 1,
-    color: colors.textMuted,
+    color: colors.text,
     fontSize: 14,
+    paddingVertical: 12,
   },
-  searchAddBadge: {
+  clearSearchButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceSoft,
+  },
+  clearSearchText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  filterPanel: {
+    gap: 14,
+    padding: 16,
+    borderRadius: 22,
+    backgroundColor: 'rgba(17,23,39,0.72)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  filterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  filterTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  clearFiltersButton: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(244,63,94,0.18)',
+    backgroundColor: 'rgba(244,63,94,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(244,63,94,0.32)',
   },
-  searchAddBadgeText: {
+  clearFiltersText: {
     color: colors.text,
     fontSize: 12,
     fontWeight: '800',
+  },
+  filterButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterButton: {
+    flexGrow: 1,
+    flexBasis: '31%',
+    minWidth: 96,
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  filterButtonLabel: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  filterButtonValue: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  optionList: {
+    overflow: 'hidden',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  optionRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  optionRowActive: {
+    backgroundColor: 'rgba(56,189,248,0.13)',
+  },
+  optionText: {
+    flex: 1,
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  optionTextActive: {
+    color: colors.text,
+  },
+  optionCheck: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '900',
   },
   heroCard: {
     padding: 22,

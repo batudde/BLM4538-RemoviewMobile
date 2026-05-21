@@ -3,6 +3,7 @@ export type Film = {
   title: string;
   posterUrl: string | null;
   averageRating: number;
+  reviewCount: number;
   genres: string[];
 };
 
@@ -17,12 +18,14 @@ export type FilmDetail = Film & {
 
 export function mapFilm(raw: Partial<Film> & Record<string, unknown>): Film {
   const rating = raw.averageRating;
+  const reviewCount = raw.reviewCount ?? raw.reviewsCount ?? raw.commentCount;
 
   return {
     id: typeof raw.id === 'number' ? raw.id : Number(raw.id ?? 0),
     title: typeof raw.title === 'string' ? raw.title : '',
     posterUrl: typeof raw.posterUrl === 'string' ? raw.posterUrl : null,
     averageRating: typeof rating === 'number' ? rating : Number(rating ?? 0),
+    reviewCount: typeof reviewCount === 'number' ? reviewCount : Number(reviewCount ?? 0),
     genres: Array.isArray(raw.genres) ? raw.genres.map((genre) => String(genre)) : [],
   };
 }

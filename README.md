@@ -2,6 +2,9 @@
 
 Proje Dokümanı (Repoda da mevcut): https://drive.google.com/file/d/1qMeciKfsvYu6Po6w2EM5qEiRwa8FSI8N/view?usp=sharing
 
+21.05.2026 - V8 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-21.05.2026-V8):
+https://youtu.be/h1YyZJP3gGg
+
 14.05.2026 - V7 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-14.05.2026-V7):
 https://youtu.be/tzAZKIS59-M
 
@@ -20,6 +23,9 @@ https://youtu.be/PXCBP-Cj7lY
 28.03.2026 - V2 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-28.03.2026-V2): https://youtu.be/hmM4diUB1TU
 
 22.03.2026 - V1 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-22.03.2026-V1): https://youtu.be/qXAMpX2xh68
+
+21.05.2026 Tarihli 22290502-Batuhan Dede - IOS2 Dersi-21.05.2026-V8 Videosundaki İlerlemeler:
+Bu bölümde projeye 8. hafta kapsamında arama, filtreleme ve sıralama özelliklerini ekledim. Home ekranında artık kullanıcı sadece film listesini görmekle kalmıyor, aynı zamanda film adıyla arama yapabiliyor, tür ve puana göre filtreleme yapabiliyor, ayrıca listeyi puana veya yorum sayısına göre sıralayabiliyor.
 
 14.05.2026 Tarihli 22290502-Batuhan Dede - IOS2 Dersi-14.05.2026-V7 Videosundaki İlerlemeler:
 Bu bölümde projede favorilere ekleme ve favorilerden çıkarma fonksiyonlarını mobil uygulamaya entegre ettim. Daha önce profil ekranında favori listesini backend’den çekebiliyordum. Bu aşamada ise kullanıcıların filmleri doğrudan arayüz üzerinden favorileyebilmesini ve isterlerse tekrar favoriden çıkarabilmesini sağladım.
