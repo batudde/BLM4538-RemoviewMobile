@@ -15,14 +15,21 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export function RegisterScreen({ navigation }: Props) {
   const { register } = useAuth();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleRegister() {
+    const trimmedUsername = username.trim().toLowerCase();
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
+
+    if (!/^[a-z0-9_]{3,20}$/.test(trimmedUsername)) {
+      setError('Kullanici adi 3-20 karakter olmali; sadece kucuk harf, rakam ve _ kullan.');
+      return;
+    }
 
     if (!trimmedEmail.includes('@') || trimmedPassword.length < 3) {
       setError('Kayit icin gecerli bir email ve en az 3 karakterli sifre gerekli.');
@@ -32,7 +39,11 @@ export function RegisterScreen({ navigation }: Props) {
     try {
       setLoading(true);
       setError(null);
-      await register({ email: trimmedEmail, password: trimmedPassword });
+      await register({
+        username: trimmedUsername,
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
       navigation.navigate('Login', {
         registeredEmail: trimmedEmail,
         registeredMessage: 'Kayit basarili. Simdi giris yapabilirsin.',
@@ -62,6 +73,12 @@ export function RegisterScreen({ navigation }: Props) {
               title="Kayit ol"
               subtitle="Hafta 2 kapsaminda form, validasyon ve JWT tabanli oturum akisi icin gerekli ilk adim burada."
             >
+              <FormInput
+                label="Kullanici adi"
+                placeholder="batuhandede17"
+                value={username}
+                onChangeText={setUsername}
+              />
               <FormInput
                 label="Email"
                 placeholder="email@ornek.com"

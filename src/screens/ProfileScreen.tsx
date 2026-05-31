@@ -5,11 +5,14 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  KeyboardAvoidingView,
   ListRenderItemInfo,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useAuth } from '../context/AuthContext';
 import { addFavorite, getFavorites, removeFavorite } from '../services/filmService';
+import { getProfile, updateProfile, UserProfile } from '../services/profileService';
 import { colors } from '../theme/colors';
 import { Film } from '../types/film';
 import { RootStackParamList } from '../types/navigation';
@@ -26,10 +30,15 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 export function ProfileScreen({ navigation }: Props) {
   const { email, logout } = useAuth();
   const [favorites, setFavorites] = useState<Film[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [descriptionDraft, setDescriptionDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
   const [favoriteLoadingId, setFavoriteLoadingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const username = profile?.username ?? getUsernameFromEmail(email);
   const averageFavoriteRating =
     favorites.length > 0
       ? (favorites.reduce((sum, film) => sum + film.averageRating, 0) / favorites.length).toFixed(1)
@@ -37,9 +46,21 @@ export function ProfileScreen({ navigation }: Props) {
 
   useFocusEffect(
     useCallback(() => {
+      loadProfile();
       loadFavorites();
     }, []),
   );
+
+  async function loadProfile() {
+    try {
+      setProfileMessage(null);
+      const nextProfile = await getProfile();
+      setProfile(nextProfile);
+      setDescriptionDraft(nextProfile.profileDescription ?? '');
+    } catch (loadError) {
+      setProfileMessage(loadError instanceof Error ? loadError.message : 'Profil bilgisi alinamadi.');
+    }
+  }
 
   async function loadFavorites(isRefresh = false) {
     try {
@@ -62,6 +83,23 @@ export function ProfileScreen({ navigation }: Props) {
 
   async function handleLogout() {
     await logout();
+  }
+
+  async function handleSaveProfile() {
+    try {
+      setProfileSaving(true);
+      setProfileMessage(null);
+      const nextProfile = await updateProfile({
+        profileDescription: descriptionDraft,
+      });
+      setProfile(nextProfile);
+      setDescriptionDraft(nextProfile.profileDescription ?? '');
+      setProfileMessage('Profil aciklamasi kaydedildi.');
+    } catch (saveError) {
+      setProfileMessage(saveError instanceof Error ? saveError.message : 'Profil kaydedilemedi.');
+    } finally {
+      setProfileSaving(false);
+    }
   }
 
   function openFilmDetail(filmId: number) {
@@ -107,8 +145,42 @@ export function ProfileScreen({ navigation }: Props) {
           </Text>
 
           <View style={styles.accountCard}>
-            <Text style={styles.accountLabel}>Giris yapilan hesap</Text>
-            <Text style={styles.accountValue}>{email ?? 'Email bilgisi bulunamadi'}</Text>
+            <Text style={styles.accountLabel}>Kullanici adi</Text>
+            <Text style={styles.accountValue}>{username || 'Kullanici bilgisi bulunamadi'}</Text>
+          </View>
+
+          <View style={styles.profileEditorCard}>
+            <Text style={styles.accountLabel}>Profil aciklamasi</Text>
+            <TextInput
+              value={descriptionDraft}
+              onChangeText={setDescriptionDraft}
+              placeholder="Orn: Bilim kurgu ve Nolan filmlerini seviyorum."
+              placeholderTextColor={colors.textMuted}
+              multiline
+              textAlignVertical="top"
+              style={styles.profileInput}
+            />
+            {profileMessage ? (
+              <Text
+                style={[
+                  styles.profileMessage,
+                  profileMessage.includes('kaydedildi') ? styles.profileMessageSuccess : null,
+                ]}
+              >
+                {profileMessage}
+              </Text>
+            ) : null}
+            <Pressable
+              onPress={handleSaveProfile}
+              disabled={profileSaving}
+              style={[styles.saveProfileButton, profileSaving ? styles.saveProfileButtonDisabled : null]}
+            >
+              {profileSaving ? (
+                <ActivityIndicator color={colors.text} />
+              ) : (
+                <Text style={styles.saveProfileText}>Profili kaydet</Text>
+              )}
+            </Pressable>
           </View>
 
           <View style={styles.statsRow}>
@@ -203,26 +275,44 @@ export function ProfileScreen({ navigation }: Props) {
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.safe}>
-        <FlatList
-          data={favorites}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={renderFavoriteCard}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={renderEmpty}
-          contentContainerStyle={styles.content}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          refreshControl={
-            <RefreshControl
-              tintColor={colors.primary}
-              refreshing={refreshing}
-              onRefresh={() => loadFavorites(true)}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        />
+        <KeyboardAvoidingView
+          style={styles.safe}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <FlatList
+            data={favorites}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={renderFavoriteCard}
+            ListHeaderComponent={renderHeader}
+            ListEmptyComponent={renderEmpty}
+            contentContainerStyle={styles.content}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl
+                tintColor={colors.primary}
+                refreshing={refreshing}
+                onRefresh={() => {
+                  loadProfile();
+                  loadFavorites(true);
+                }}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+          />
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ScreenBackground>
   );
+}
+
+function getUsernameFromEmail(email: string | null) {
+  if (!email) {
+    return '';
+  }
+
+  const atIndex = email.indexOf('@');
+  return atIndex > 0 ? email.slice(0, atIndex) : email;
 }
 
 type PosterProps = {
@@ -327,6 +417,48 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 18,
     fontWeight: '800',
+  },
+  profileEditorCard: {
+    gap: 10,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  profileInput: {
+    minHeight: 96,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    color: colors.text,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  profileMessage: {
+    color: colors.warning,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  profileMessageSuccess: {
+    color: colors.success,
+  },
+  saveProfileButton: {
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+  },
+  saveProfileButtonDisabled: {
+    opacity: 0.72,
+  },
+  saveProfileText: {
+    color: colors.text,
+    fontWeight: '900',
   },
   statsRow: {
     flexDirection: 'row',

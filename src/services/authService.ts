@@ -6,6 +6,10 @@ type AuthPayload = {
   password: string;
 };
 
+type RegisterPayload = AuthPayload & {
+  username: string;
+};
+
 type LoginResponse = {
   token?: string;
   Token?: string;
@@ -13,7 +17,7 @@ type LoginResponse = {
   jwt?: string;
 };
 
-export async function registerUser(payload: AuthPayload) {
+export async function registerUser(payload: RegisterPayload) {
   return request<{ message?: string; Message?: string }>('/api/Auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
