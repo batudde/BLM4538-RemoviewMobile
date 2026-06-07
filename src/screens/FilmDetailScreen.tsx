@@ -55,7 +55,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
       setFilm(nextFilm);
       setIsFavorite(favorites.some((favorite) => favorite.id === route.params.filmId));
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Film detayi alinamadi.');
+      setError(loadError instanceof Error ? loadError.message : 'Film detayı alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
         await removeFavorite(route.params.filmId);
         setIsFavorite(false);
         setFeedbackType('success');
-        setFeedback('Film favorilerden cikarildi.');
+        setFeedback('Film favorilerden çıkarıldı.');
       } else {
         await addFavorite(route.params.filmId);
         setIsFavorite(true);
@@ -80,7 +80,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
     } catch (favoriteError) {
       setFeedbackType('error');
       setFeedback(
-        favoriteError instanceof Error ? favoriteError.message : 'Favori islemi tamamlanamadi.',
+        favoriteError instanceof Error ? favoriteError.message : 'Favori işlemi tamamlanamadı.',
       );
     } finally {
       setFavoriteLoading(false);
@@ -90,7 +90,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
   async function handleRatingSubmit() {
     if (!selectedRating) {
       setFeedbackType('error');
-      setFeedback('Lutfen 1 ile 5 arasinda bir puan sec.');
+      setFeedback('Lütfen 1 ile 5 arasında bir puan seç.');
       return;
     }
 
@@ -99,11 +99,11 @@ export function FilmDetailScreen({ navigation, route }: Props) {
       setFeedback(null);
       await addRating(route.params.filmId, selectedRating);
       setFeedbackType('success');
-      setFeedback('Puan basariyla gonderildi.');
+      setFeedback('Puan başarıyla gönderildi.');
       await loadFilm();
     } catch (submitError) {
       setFeedbackType('error');
-      setFeedback(submitError instanceof Error ? submitError.message : 'Puan gonderilemedi.');
+      setFeedback(submitError instanceof Error ? submitError.message : 'Puan gönderilemedi.');
     } finally {
       setRatingLoading(false);
     }
@@ -114,7 +114,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
 
     if (!comment) {
       setFeedbackType('error');
-      setFeedback('Lutfen yorum alani bos birakma.');
+      setFeedback('Lütfen yorum alanını boş bırakma.');
       return;
     }
 
@@ -124,11 +124,11 @@ export function FilmDetailScreen({ navigation, route }: Props) {
       await addReview(route.params.filmId, comment);
       setReviewText('');
       setFeedbackType('success');
-      setFeedback('Yorum onaya gonderildi. Onaylaninca listede gorunecek.');
+      setFeedback('Yorum onaya gönderildi. Onaylanınca listede görünecek.');
       await loadFilm();
     } catch (submitError) {
       setFeedbackType('error');
-      setFeedback(submitError instanceof Error ? submitError.message : 'Yorum gonderilemedi.');
+      setFeedback(submitError instanceof Error ? submitError.message : 'Yorum gönderilemedi.');
     } finally {
       setReviewLoading(false);
     }
@@ -145,11 +145,11 @@ export function FilmDetailScreen({ navigation, route }: Props) {
           {loading ? (
             <View style={styles.stateCard}>
               <ActivityIndicator color={colors.primary} />
-              <Text style={styles.stateTitle}>Film detayi yukleniyor</Text>
+              <Text style={styles.stateTitle}>Film detayı yükleniyor</Text>
             </View>
           ) : error ? (
             <View style={styles.stateCard}>
-              <Text style={styles.stateTitle}>Film detayi alinamadi</Text>
+              <Text style={styles.stateTitle}>Film detayı alınamadı</Text>
               <Text style={styles.stateText}>{error}</Text>
               <Pressable onPress={loadFilm} style={styles.retryButton}>
                 <Text style={styles.retryText}>Tekrar dene</Text>
@@ -191,20 +191,14 @@ export function FilmDetailScreen({ navigation, route }: Props) {
                   </Pressable>
                 </View>
 
-                <Text style={styles.sectionLabel}>Turler</Text>
+                <Text style={styles.sectionLabel}>Türler</Text>
                 <View style={styles.genreRow}>
-                  {(film.genres.length > 0 ? film.genres : ['Tur bilgisi yok']).map((genre) => (
+                  {(film.genres.length > 0 ? film.genres : ['Tür bilgisi yok']).map((genre) => (
                     <View key={genre} style={styles.genreChip}>
                       <Text style={styles.genreChipText}>{genre}</Text>
                     </View>
                   ))}
                 </View>
-
-                <Text style={styles.sectionLabel}>Detay notu</Text>
-                <Text style={styles.sectionText}>
-                  Bu backend yapisinda ozet alani olmadigi icin bu ekranda afis, turler ve ortalama
-                  puan gosteriliyor.
-                </Text>
 
                 <Text style={styles.sectionLabel}>Bu filme puan ver</Text>
                 <View style={styles.ratingSelectorRow}>
@@ -235,7 +229,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
                   style={[styles.actionButton, styles.ratingButton]}
                 >
                   <Text style={styles.actionButtonText}>
-                    {ratingLoading ? 'Gonderiliyor...' : 'Puan Ver'}
+                    {ratingLoading ? 'Gönderiliyor...' : 'Puan Ver'}
                   </Text>
                 </Pressable>
 
@@ -245,7 +239,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
                   numberOfLines={4}
                   value={reviewText}
                   onChangeText={setReviewText}
-                  placeholder="Bu film hakkindaki yorumunu yaz..."
+                  placeholder="Bu film hakkındaki yorumunu yaz..."
                   placeholderTextColor={colors.textMuted}
                   style={styles.commentInput}
                   textAlignVertical="top"
@@ -256,7 +250,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
                   style={[styles.actionButton, styles.reviewButton]}
                 >
                   <Text style={styles.actionButtonText}>
-                    {reviewLoading ? 'Gonderiliyor...' : 'Yorumu Gonder'}
+                    {reviewLoading ? 'Gönderiliyor...' : 'Yorumu Gönder'}
                   </Text>
                 </Pressable>
 
@@ -277,7 +271,9 @@ export function FilmDetailScreen({ navigation, route }: Props) {
                     {film.reviews.map((review) => (
                       <View key={review.id} style={styles.reviewCard}>
                         <View style={styles.reviewHeader}>
-                          <Text style={styles.reviewUser}>Kullanici #{review.userId}</Text>
+                          <Text style={styles.reviewUser}>
+                            {review.username || `Kullanıcı #${review.userId}`}
+                          </Text>
                           <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
                         </View>
                         <Text style={styles.reviewComment}>{review.comment}</Text>
@@ -285,7 +281,7 @@ export function FilmDetailScreen({ navigation, route }: Props) {
                     ))}
                   </View>
                 ) : (
-                  <Text style={styles.sectionText}>Bu film icin henuz onayli yorum bulunmuyor.</Text>
+                  <Text style={styles.sectionText}>Bu film için henüz onaylı yorum bulunmuyor.</Text>
                 )}
               </View>
             </View>

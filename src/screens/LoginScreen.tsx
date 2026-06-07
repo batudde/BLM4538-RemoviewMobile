@@ -45,7 +45,7 @@ export function LoginScreen({ navigation, route }: Props) {
     const trimmedPassword = password.trim();
 
     if (!trimmedEmail.includes('@') || trimmedPassword.length < 3) {
-      setError('Lutfen gecerli bir email ve en az 3 karakterli sifre gir.');
+      setError('Lütfen geçerli bir email ve en az 3 karakterli şifre gir.');
       return;
     }
 
@@ -55,7 +55,7 @@ export function LoginScreen({ navigation, route }: Props) {
       setMessage(null);
       await login({ email: trimmedEmail, password: trimmedPassword });
     } catch (loginError) {
-      setError(loginError instanceof Error ? loginError.message : 'Giris yapilamadi.');
+      setError(loginError instanceof Error ? loginError.message : 'Giriş yapılamadı.');
     } finally {
       setLoading(false);
     }
@@ -71,13 +71,12 @@ export function LoginScreen({ navigation, route }: Props) {
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <View style={styles.hero}>
               <Text style={styles.brand}>Remoview</Text>
-              <Text style={styles.lead}>Film geceleri icin tek adres. Giris yap, listeni ac ve yorumlarini birak.</Text>
+              <Text style={styles.lead}>Film geceleri için tek adres. Giriş yap, listeni aç ve yorumlarını bırak.</Text>
             </View>
 
             <AuthCard
               eyebrow="WELCOME BACK"
-              title="Giris yap"
-              subtitle="Gecen donemdeki akisin aynisi: email ve sifre ile oturum ac, JWT token saklansin."
+              title="Giriş yap"
             >
               <FormInput
                 label="Email"
@@ -87,7 +86,7 @@ export function LoginScreen({ navigation, route }: Props) {
                 onChangeText={setEmail}
               />
               <FormInput
-                label="Sifre"
+                label="Şifre"
                 placeholder="********"
                 secureTextEntry
                 value={password}
@@ -97,10 +96,10 @@ export function LoginScreen({ navigation, route }: Props) {
               {error ? <Text style={styles.error}>{error}</Text> : null}
               {message ? <Text style={styles.message}>{message}</Text> : null}
 
-              <PrimaryButton title="Giris Yap" loading={loading} onPress={handleLogin} />
+              <PrimaryButton title="Giriş Yap" loading={loading} onPress={handleLogin} />
 
               <Pressable onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.switchText}>Hesabin yok mu? Kayit ekranina gec.</Text>
+                <Text style={styles.switchText}>Hesabın yok mu? Kayıt ekranına geç.</Text>
               </Pressable>
             </AuthCard>
           </ScrollView>

@@ -79,7 +79,7 @@ export function HomeScreen({ navigation }: Props) {
       setFilms(nextFilms);
       setFavoriteIds(favorites.map((favorite) => favorite.id));
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Filmler alinamadi.');
+      setError(loadError instanceof Error ? loadError.message : 'Filmler alınamadı.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -186,7 +186,7 @@ export function HomeScreen({ navigation }: Props) {
           </View>
           <View style={styles.headerActions}>
             <Pressable onPress={logout} style={styles.logoutButton}>
-              <Text style={styles.logoutText}>Cikis</Text>
+              <Text style={styles.logoutText}>Çıkış</Text>
             </Pressable>
             <Pressable onPress={openProfile} style={styles.iconButton}>
               <Text style={styles.iconButtonText}>P</Text>
@@ -224,7 +224,7 @@ export function HomeScreen({ navigation }: Props) {
 
           <View style={styles.filterButtons}>
             <Pressable onPress={() => toggleFilterMenu('genre')} style={styles.filterButton}>
-              <Text style={styles.filterButtonLabel}>Tur</Text>
+              <Text style={styles.filterButtonLabel}>Tür</Text>
               <Text style={styles.filterButtonValue}>{selectedGenre}</Text>
             </Pressable>
 
@@ -362,7 +362,7 @@ export function HomeScreen({ navigation }: Props) {
                 <View style={styles.genreRow}>
                   {(visibleFeaturedFilm.genres.length > 0
                     ? visibleFeaturedFilm.genres.slice(0, 3)
-                    : ['Tur yok']
+                    : ['Tür yok']
                   ).map((genre) => (
                     <View key={genre} style={styles.genreChip}>
                       <Text style={styles.genreChipText}>{genre}</Text>
@@ -404,7 +404,7 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.movieMeta}>
             <Text style={styles.movieTitle}>{item.title}</Text>
             <Text style={styles.movieGenres}>
-              {item.genres.length > 0 ? item.genres.join(' | ') : 'Tur bilgisi yakinda'}
+              {item.genres.length > 0 ? item.genres.join(' | ') : 'Tür bilgisi yakında'}
             </Text>
           </View>
         </Pressable>
@@ -431,7 +431,7 @@ export function HomeScreen({ navigation }: Props) {
       return (
         <View style={styles.stateCard}>
           <ActivityIndicator color={colors.primary} />
-          <Text style={styles.stateTitle}>Filmler yukleniyor</Text>
+          <Text style={styles.stateTitle}>Filmler yükleniyor</Text>
           <Text style={styles.stateText}>Backend'den onayli film listesi getiriliyor.</Text>
         </View>
       );
@@ -440,7 +440,7 @@ export function HomeScreen({ navigation }: Props) {
     if (error) {
       return (
         <View style={styles.stateCard}>
-          <Text style={styles.stateTitle}>Film listesi alinamadi</Text>
+          <Text style={styles.stateTitle}>Film listesi alınamadı</Text>
           <Text style={styles.stateText}>{error}</Text>
           <Pressable onPress={() => loadFilms()} style={styles.retryButton}>
             <Text style={styles.retryText}>Tekrar dene</Text>
@@ -465,9 +465,9 @@ export function HomeScreen({ navigation }: Props) {
 
     return (
       <View style={styles.stateCard}>
-        <Text style={styles.stateTitle}>Henuz onayli film yok</Text>
+        <Text style={styles.stateTitle}>Henüz onaylı film yok</Text>
         <Text style={styles.stateText}>
-          Backend sadece approved durumundaki filmleri dondurdugu icin liste su an bos olabilir.
+          Backend sadece onaylı filmleri döndürdüğü için liste şu an boş olabilir.
         </Text>
       </View>
     );
@@ -480,7 +480,7 @@ export function HomeScreen({ navigation }: Props) {
           data={visibleFilms}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderFilmCard}
-          ListHeaderComponent={renderHeader}
+          ListHeaderComponent={renderHeader()}
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={styles.content}
           ItemSeparatorComponent={() => <View style={styles.separator} />}

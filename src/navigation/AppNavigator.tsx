@@ -7,6 +7,7 @@ import { FilmDetailScreen } from '../screens/FilmDetailScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { PublicProfileScreen } from '../screens/PublicProfileScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
 import { SplashScreen } from '../screens/SplashScreen';
 import { colors } from '../theme/colors';
@@ -43,6 +44,7 @@ function RootNavigator() {
       <RootStack.Screen name="FilmDetail" component={FilmDetailScreen} />
       <RootStack.Screen name="AddFilm" component={AddFilmScreen} />
       <RootStack.Screen name="Profile" component={ProfileScreen} />
+      <RootStack.Screen name="PublicProfile" component={PublicProfileScreen} />
     </RootStack.Navigator>
   );
 }

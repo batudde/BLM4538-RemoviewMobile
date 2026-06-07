@@ -44,7 +44,7 @@ export function AddFilmScreen({ navigation }: Props) {
       const nextGenres = await getGenres();
       setGenres(nextGenres);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Turler alinamadi.');
+      setError(loadError instanceof Error ? loadError.message : 'Türler alınamadı.');
     } finally {
       setLoadingGenres(false);
     }
@@ -109,7 +109,7 @@ export function AddFilmScreen({ navigation }: Props) {
             <View style={styles.hero}>
               <Text style={styles.title}>Film Ekle</Text>
               <Text style={styles.subtitle}>
-                Gonderilen filmler once pending durumuna duser. Superadmin onayi gelince mobil listede gorunur.
+                Izlediginiz filmi buradan ekleyebilirsiniz.
               </Text>
             </View>
 
@@ -130,12 +130,12 @@ export function AddFilmScreen({ navigation }: Props) {
               />
 
               <View style={styles.genreSection}>
-                <Text style={styles.genreLabel}>Turler</Text>
+                <Text style={styles.genreLabel}>Türler</Text>
 
                 {loadingGenres ? (
                   <View style={styles.genreState}>
                     <ActivityIndicator color={colors.primary} />
-                    <Text style={styles.genreStateText}>Turler yukleniyor</Text>
+                    <Text style={styles.genreStateText}>Türler yükleniyor</Text>
                   </View>
                 ) : error ? (
                   <View style={styles.genreState}>

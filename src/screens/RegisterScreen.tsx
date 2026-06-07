@@ -27,12 +27,12 @@ export function RegisterScreen({ navigation }: Props) {
     const trimmedPassword = password.trim();
 
     if (!/^[a-z0-9_]{3,20}$/.test(trimmedUsername)) {
-      setError('Kullanici adi 3-20 karakter olmali; sadece kucuk harf, rakam ve _ kullan.');
+      setError('Kullanıcı adı 3-20 karakter olmalı; sadece küçük harf, rakam ve _ kullan.');
       return;
     }
 
     if (!trimmedEmail.includes('@') || trimmedPassword.length < 3) {
-      setError('Kayit icin gecerli bir email ve en az 3 karakterli sifre gerekli.');
+      setError('Kayıt için geçerli bir email ve en az 3 karakterli şifre gerekli.');
       return;
     }
 
@@ -46,10 +46,10 @@ export function RegisterScreen({ navigation }: Props) {
       });
       navigation.navigate('Login', {
         registeredEmail: trimmedEmail,
-        registeredMessage: 'Kayit basarili. Simdi giris yapabilirsin.',
+        registeredMessage: 'Kayıt başarılı. Şimdi giriş yapabilirsin.',
       });
     } catch (registerError) {
-      setError(registerError instanceof Error ? registerError.message : 'Kayit tamamlanamadi.');
+      setError(registerError instanceof Error ? registerError.message : 'Kayıt tamamlanamadı.');
     } finally {
       setLoading(false);
     }
@@ -65,17 +65,15 @@ export function RegisterScreen({ navigation }: Props) {
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <View style={styles.hero}>
               <Text style={styles.brand}>Yeni hesap</Text>
-              <Text style={styles.lead}>Register ekranini once kuruyoruz; backend ayni `api/Auth/register` endpointiyle calisiyor.</Text>
             </View>
 
             <AuthCard
               eyebrow="JOIN REMOVIEW"
-              title="Kayit ol"
-              subtitle="Hafta 2 kapsaminda form, validasyon ve JWT tabanli oturum akisi icin gerekli ilk adim burada."
+              title="Kayıt ol"
             >
               <FormInput
-                label="Kullanici adi"
-                placeholder="batuhandede17"
+                label="Kullanıcı adı"
+                placeholder="ornek123"
                 value={username}
                 onChangeText={setUsername}
               />
@@ -87,7 +85,7 @@ export function RegisterScreen({ navigation }: Props) {
                 onChangeText={setEmail}
               />
               <FormInput
-                label="Sifre"
+                label="Şifre"
                 placeholder="En az 3 karakter"
                 secureTextEntry
                 value={password}
@@ -96,10 +94,10 @@ export function RegisterScreen({ navigation }: Props) {
 
               {error ? <Text style={styles.error}>{error}</Text> : null}
 
-              <PrimaryButton title="Kayit Ol" loading={loading} onPress={handleRegister} />
+              <PrimaryButton title="Kayıt Ol" loading={loading} onPress={handleRegister} />
 
               <Pressable onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.switchText}>Zaten hesabim var. Giris ekranina don.</Text>
+                <Text style={styles.switchText}>Zaten hesabım var. Giriş ekranına dön.</Text>
               </Pressable>
             </AuthCard>
           </ScrollView>

@@ -20,6 +20,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenBackground } from '../components/ScreenBackground';
 import { useAuth } from '../context/AuthContext';
 import { addFavorite, getFavorites, removeFavorite } from '../services/filmService';
+import {
+  acceptFriendRequest,
+  FriendRequest,
+  FriendSearchResult,
+  FriendUser,
+  getFriendRequests,
+  getFriends,
+  rejectFriendRequest,
+  searchUsers,
+  sendFriendRequest,
+} from '../services/friendService';
 import { getProfile, updateProfile, UserProfile } from '../services/profileService';
 import { colors } from '../theme/colors';
 import { Film } from '../types/film';
@@ -38,6 +49,14 @@ export function ProfileScreen({ navigation }: Props) {
   const [favoriteLoadingId, setFavoriteLoadingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const [friends, setFriends] = useState<FriendUser[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [friendSearch, setFriendSearch] = useState('');
+  const [friendResults, setFriendResults] = useState<FriendSearchResult[]>([]);
+  const [friendPanel, setFriendPanel] = useState<'search' | 'requests' | 'friends'>('search');
+  const [friendLoading, setFriendLoading] = useState(false);
+  const [friendActionId, setFriendActionId] = useState<number | null>(null);
+  const [friendMessage, setFriendMessage] = useState<string | null>(null);
   const username = profile?.username ?? getUsernameFromEmail(email);
   const averageFavoriteRating =
     favorites.length > 0
@@ -48,6 +67,8 @@ export function ProfileScreen({ navigation }: Props) {
     useCallback(() => {
       loadProfile();
       loadFavorites();
+      loadFriends();
+      loadFriendRequests();
     }, []),
   );
 
@@ -58,7 +79,7 @@ export function ProfileScreen({ navigation }: Props) {
       setProfile(nextProfile);
       setDescriptionDraft(nextProfile.profileDescription ?? '');
     } catch (loadError) {
-      setProfileMessage(loadError instanceof Error ? loadError.message : 'Profil bilgisi alinamadi.');
+      setProfileMessage(loadError instanceof Error ? loadError.message : 'Profil bilgisi alınamadı.');
     }
   }
 
@@ -74,10 +95,26 @@ export function ProfileScreen({ navigation }: Props) {
       const nextFavorites = await getFavorites();
       setFavorites(nextFavorites);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Favoriler alinamadi.');
+      setError(loadError instanceof Error ? loadError.message : 'Favoriler alınamadı.');
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  }
+
+  async function loadFriends() {
+    try {
+      setFriends(await getFriends());
+    } catch (loadError) {
+      setFriendMessage(loadError instanceof Error ? loadError.message : 'Arkadaş listesi alınamadı.');
+    }
+  }
+
+  async function loadFriendRequests() {
+    try {
+      setFriendRequests(await getFriendRequests());
+    } catch (loadError) {
+      setFriendMessage(loadError instanceof Error ? loadError.message : 'Arkadaş istekleri alınamadı.');
     }
   }
 
@@ -94,7 +131,7 @@ export function ProfileScreen({ navigation }: Props) {
       });
       setProfile(nextProfile);
       setDescriptionDraft(nextProfile.profileDescription ?? '');
-      setProfileMessage('Profil aciklamasi kaydedildi.');
+      setProfileMessage('Profil açıklaması kaydedildi.');
     } catch (saveError) {
       setProfileMessage(saveError instanceof Error ? saveError.message : 'Profil kaydedilemedi.');
     } finally {
@@ -104,6 +141,71 @@ export function ProfileScreen({ navigation }: Props) {
 
   function openFilmDetail(filmId: number) {
     navigation.navigate('FilmDetail', { filmId });
+  }
+
+  function openPublicProfile(friendUsername: string) {
+    navigation.navigate('PublicProfile', { username: friendUsername });
+  }
+
+  async function handleSearchFriends() {
+    const query = friendSearch.trim();
+
+    if (query.length < 2) {
+      setFriendMessage('Arama için en az 2 karakter yaz.');
+      setFriendResults([]);
+      return;
+    }
+
+    try {
+      setFriendLoading(true);
+      setFriendMessage(null);
+      setFriendPanel('search');
+      setFriendResults(await searchUsers(query));
+    } catch (searchError) {
+      setFriendMessage(searchError instanceof Error ? searchError.message : 'Kullanıcı aranamadı.');
+    } finally {
+      setFriendLoading(false);
+    }
+  }
+
+  async function handleSendFriendRequest(result: FriendSearchResult) {
+    try {
+      setFriendActionId(result.id);
+      setFriendMessage(null);
+      await sendFriendRequest(result.username);
+      setFriendMessage(`${result.username} kullanıcısına istek gönderildi.`);
+      setFriendResults((current) =>
+        current.map((item) =>
+          item.id === result.id ? { ...item, friendshipStatus: 'pending_sent' } : item,
+        ),
+      );
+    } catch (requestError) {
+      setFriendMessage(requestError instanceof Error ? requestError.message : 'İstek gönderilemedi.');
+    } finally {
+      setFriendActionId(null);
+    }
+  }
+
+  async function handleRespondToRequest(requestId: number, action: 'accept' | 'reject') {
+    try {
+      setFriendActionId(requestId);
+      setFriendMessage(null);
+
+      if (action === 'accept') {
+        await acceptFriendRequest(requestId);
+        setFriendMessage('Arkadaş isteği kabul edildi.');
+      } else {
+        await rejectFriendRequest(requestId);
+        setFriendMessage('Arkadaş isteği reddedildi.');
+      }
+
+      await loadFriendRequests();
+      await loadFriends();
+    } catch (requestError) {
+      setFriendMessage(requestError instanceof Error ? requestError.message : 'İstek güncellenemedi.');
+    } finally {
+      setFriendActionId(null);
+    }
   }
 
   async function toggleFavorite(filmId: number) {
@@ -124,6 +226,164 @@ export function ProfileScreen({ navigation }: Props) {
     }
   }
 
+  function renderFriendTools() {
+    return (
+      <View style={styles.friendCard}>
+        <View style={styles.friendHeader}>
+          <View>
+            <Text style={styles.friendTitle}>Arkadaş Ekle</Text>
+            <Text style={styles.friendHint}>Kullanıcı adıyla ara, istek gönder.</Text>
+          </View>
+
+          <Pressable
+            onPress={() => setFriendPanel('requests')}
+            style={[styles.friendTab, friendPanel === 'requests' ? styles.friendTabActive : null]}
+          >
+            <Text style={styles.friendTabText}>İstekler ({friendRequests.length})</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.searchRow}>
+          <TextInput
+            value={friendSearch}
+            onChangeText={setFriendSearch}
+            placeholder="kullanıcıadı"
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="none"
+            style={styles.friendSearchInput}
+            onSubmitEditing={handleSearchFriends}
+          />
+          <Pressable
+            onPress={handleSearchFriends}
+            disabled={friendLoading}
+            style={[styles.searchButton, friendLoading ? styles.searchButtonDisabled : null]}
+          >
+            {friendLoading ? (
+              <ActivityIndicator color={colors.text} />
+            ) : (
+              <Text style={styles.searchButtonText}>Ara</Text>
+            )}
+          </Pressable>
+        </View>
+
+        <View style={styles.friendTabsRow}>
+          <Pressable
+            onPress={() => setFriendPanel('search')}
+            style={[styles.friendTab, friendPanel === 'search' ? styles.friendTabActive : null]}
+          >
+            <Text style={styles.friendTabText}>Arama</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setFriendPanel('friends')}
+            style={[styles.friendTab, friendPanel === 'friends' ? styles.friendTabActive : null]}
+          >
+            <Text style={styles.friendTabText}>Arkadaşlar ({friends.length})</Text>
+          </Pressable>
+        </View>
+
+        {friendMessage ? <Text style={styles.friendMessage}>{friendMessage}</Text> : null}
+        {renderFriendPanel()}
+      </View>
+    );
+  }
+
+  function renderFriendPanel() {
+    if (friendPanel === 'requests') {
+      if (friendRequests.length === 0) {
+        return <Text style={styles.friendEmpty}>Bekleyen arkadaş isteği yok.</Text>;
+      }
+
+      return (
+        <View style={styles.friendList}>
+          {friendRequests.map((request) => (
+            <View key={request.id} style={styles.friendRow}>
+              <Pressable onPress={() => openPublicProfile(request.user.username)} style={styles.friendInfo}>
+                <Text style={styles.friendUsername}>{request.user.username}</Text>
+                <Text style={styles.friendDescription} numberOfLines={2}>
+                  {request.user.profileDescription || 'Profil açıklaması yok.'}
+                </Text>
+              </Pressable>
+
+              <View style={styles.requestActions}>
+                <Pressable
+                  onPress={() => handleRespondToRequest(request.id, 'accept')}
+                  disabled={friendActionId === request.id}
+                  style={styles.acceptButton}
+                >
+                  <Text style={styles.requestActionText}>Onayla</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleRespondToRequest(request.id, 'reject')}
+                  disabled={friendActionId === request.id}
+                  style={styles.rejectButton}
+                >
+                  <Text style={styles.requestActionText}>Reddet</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+      );
+    }
+
+    if (friendPanel === 'friends') {
+      if (friends.length === 0) {
+        return <Text style={styles.friendEmpty}>Arkadaş listen henüz boş.</Text>;
+      }
+
+      return (
+        <View style={styles.friendList}>
+          {friends.map((friend) => (
+            <Pressable
+              key={friend.id}
+              onPress={() => openPublicProfile(friend.username)}
+              style={styles.friendRow}
+            >
+              <View style={styles.friendInfo}>
+                <Text style={styles.friendUsername}>{friend.username}</Text>
+                <Text style={styles.friendDescription} numberOfLines={2}>
+                  {friend.profileDescription || 'Profil açıklaması yok.'}
+                </Text>
+              </View>
+              <Text style={styles.friendChevron}>{'>'}</Text>
+            </Pressable>
+          ))}
+        </View>
+      );
+    }
+
+    if (friendResults.length === 0) {
+      return <Text style={styles.friendEmpty}>Kullanıcı aramak için yukarıdaki kutuyu kullan.</Text>;
+    }
+
+    return (
+      <View style={styles.friendList}>
+        {friendResults.map((result) => (
+          <View key={result.id} style={styles.friendRow}>
+            <Pressable onPress={() => openPublicProfile(result.username)} style={styles.friendInfo}>
+              <Text style={styles.friendUsername}>{result.username}</Text>
+              <Text style={styles.friendDescription} numberOfLines={2}>
+                {result.profileDescription || getFriendshipStatusLabel(result.friendshipStatus)}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => handleSendFriendRequest(result)}
+              disabled={result.friendshipStatus !== 'none' || friendActionId === result.id}
+              style={[
+                styles.addFriendButton,
+                result.friendshipStatus !== 'none' ? styles.addFriendButtonDisabled : null,
+              ]}
+            >
+              <Text style={styles.addFriendText}>{getFriendshipActionLabel(result.friendshipStatus)}</Text>
+            </Pressable>
+          </View>
+        ))}
+      </View>
+    );
+  }
+
   function renderHeader() {
     return (
       <View style={styles.headerBlock}>
@@ -133,28 +393,24 @@ export function ProfileScreen({ navigation }: Props) {
           </Pressable>
 
           <Pressable onPress={handleLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Cikis</Text>
+          <Text style={styles.logoutText}>Çıkış</Text>
           </Pressable>
         </View>
 
         <View style={styles.heroCard}>
-          <Text style={styles.eyebrow}>WEEK 7</Text>
           <Text style={styles.title}>Profilim</Text>
-          <Text style={styles.subtitle}>
-            Hesap ozeti ve favori listen burada dinamik olarak gosteriliyor.
-          </Text>
 
           <View style={styles.accountCard}>
-            <Text style={styles.accountLabel}>Kullanici adi</Text>
-            <Text style={styles.accountValue}>{username || 'Kullanici bilgisi bulunamadi'}</Text>
+            <Text style={styles.accountLabel}>Kullanıcı adı</Text>
+            <Text style={styles.accountValue}>{username || 'Kullanıcı bilgisi bulunamadı'}</Text>
           </View>
 
           <View style={styles.profileEditorCard}>
-            <Text style={styles.accountLabel}>Profil aciklamasi</Text>
+            <Text style={styles.accountLabel}>Profil açıklaması</Text>
             <TextInput
               value={descriptionDraft}
               onChangeText={setDescriptionDraft}
-              placeholder="Orn: Bilim kurgu ve Nolan filmlerini seviyorum."
+              placeholder="Örn: Bilim kurgu ve Nolan filmlerini seviyorum."
               placeholderTextColor={colors.textMuted}
               multiline
               textAlignVertical="top"
@@ -191,14 +447,24 @@ export function ProfileScreen({ navigation }: Props) {
 
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{averageFavoriteRating}</Text>
-              <Text style={styles.statLabel}>Ort. favori puani</Text>
+              <Text style={styles.statLabel}>Ort. favori puanı</Text>
             </View>
+
+            <Pressable
+              onPress={() => setFriendPanel('friends')}
+              style={({ pressed }) => [styles.statCard, pressed ? styles.statCardPressed : null]}
+            >
+              <Text style={styles.statValue}>{friends.length}</Text>
+              <Text style={styles.statLabel}>Arkadaş</Text>
+            </Pressable>
           </View>
+
+          {renderFriendTools()}
         </View>
 
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>Favori Listem</Text>
-          <Text style={styles.sectionBadge}>{favorites.length} kayit</Text>
+          <Text style={styles.sectionBadge}>{favorites.length} kayıt</Text>
         </View>
       </View>
     );
@@ -216,7 +482,7 @@ export function ProfileScreen({ navigation }: Props) {
           <View style={styles.favoriteMeta}>
             <Text style={styles.favoriteTitle}>{item.title}</Text>
             <Text style={styles.favoriteGenres}>
-              {item.genres.length > 0 ? item.genres.join(' | ') : 'Tur bilgisi yakinda'}
+              {item.genres.length > 0 ? item.genres.join(' | ') : 'Tür bilgisi yakında'}
             </Text>
           </View>
         </Pressable>
@@ -243,8 +509,8 @@ export function ProfileScreen({ navigation }: Props) {
       return (
         <View style={styles.stateCard}>
           <ActivityIndicator color={colors.primary} />
-          <Text style={styles.stateTitle}>Profil yukleniyor</Text>
-          <Text style={styles.stateText}>Favori listen backend'den cekiliyor.</Text>
+          <Text style={styles.stateTitle}>Profil yükleniyor</Text>
+          <Text style={styles.stateText}>Favori listen yükleniyor.</Text>
         </View>
       );
     }
@@ -252,7 +518,7 @@ export function ProfileScreen({ navigation }: Props) {
     if (error) {
       return (
         <View style={styles.stateCard}>
-          <Text style={styles.stateTitle}>Profil bilgisi alinamadi</Text>
+          <Text style={styles.stateTitle}>Profil bilgisi alınamadı</Text>
           <Text style={styles.stateText}>{error}</Text>
           <Pressable onPress={() => loadFavorites()} style={styles.retryButton}>
             <Text style={styles.retryText}>Tekrar dene</Text>
@@ -263,11 +529,7 @@ export function ProfileScreen({ navigation }: Props) {
 
     return (
       <View style={styles.stateCard}>
-        <Text style={styles.stateTitle}>Henuz favori film yok</Text>
-        <Text style={styles.stateText}>
-          Bu hafta profil sayfasini bagladik. Favorilere ekleme-cikarma akisini sonraki adimda
-          tamamlayacagiz.
-        </Text>
+        <Text style={styles.stateTitle}>Henüz favori film yok</Text>
       </View>
     );
   }
@@ -283,7 +545,7 @@ export function ProfileScreen({ navigation }: Props) {
             data={favorites}
             keyExtractor={(item) => String(item.id)}
             renderItem={renderFavoriteCard}
-            ListHeaderComponent={renderHeader}
+            ListHeaderComponent={renderHeader()}
             ListEmptyComponent={renderEmpty}
             contentContainerStyle={styles.content}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -295,6 +557,8 @@ export function ProfileScreen({ navigation }: Props) {
                 onRefresh={() => {
                   loadProfile();
                   loadFavorites(true);
+                  loadFriends();
+                  loadFriendRequests();
                 }}
               />
             }
@@ -313,6 +577,38 @@ function getUsernameFromEmail(email: string | null) {
 
   const atIndex = email.indexOf('@');
   return atIndex > 0 ? email.slice(0, atIndex) : email;
+}
+
+function getFriendshipStatusLabel(status: FriendSearchResult['friendshipStatus']) {
+  if (status === 'friends') {
+    return 'Zaten arkadas listenizde.';
+  }
+
+  if (status === 'pending_sent') {
+    return 'İstek gönderildi, onay bekliyor.';
+  }
+
+  if (status === 'pending_received') {
+    return 'Bu kullanıcıdan gelen istek var.';
+  }
+
+  return 'Profil açıklaması yok.';
+}
+
+function getFriendshipActionLabel(status: FriendSearchResult['friendshipStatus']) {
+  if (status === 'friends') {
+    return 'Arkadaş';
+  }
+
+  if (status === 'pending_sent') {
+    return 'Bekliyor';
+  }
+
+  if (status === 'pending_received') {
+    return 'Istek var';
+  }
+
+  return 'İstek gönder';
 }
 
 type PosterProps = {
@@ -460,6 +756,162 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '900',
   },
+  friendCard: {
+    gap: 12,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  friendHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  friendHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  friendTitle: {
+    color: colors.text,
+    fontSize: 32,
+    fontWeight: '900',
+  },
+  searchRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  friendSearchInput: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    color: colors.text,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  searchButton: {
+    minWidth: 76,
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+  },
+  searchButtonDisabled: {
+    opacity: 0.72,
+  },
+  searchButtonText: {
+    color: colors.text,
+    fontWeight: '900',
+  },
+  friendTabsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  friendTab: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  friendTabActive: {
+    backgroundColor: 'rgba(56,189,248,0.16)',
+    borderColor: 'rgba(56,189,248,0.42)',
+  },
+  friendTabText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  friendMessage: {
+    color: colors.warning,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  friendEmpty: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  friendList: {
+    gap: 10,
+  },
+  friendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  friendInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  friendUsername: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  friendDescription: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  addFriendButton: {
+    minHeight: 38,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: colors.primary,
+  },
+  addFriendButtonDisabled: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  addFriendText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  requestActions: {
+    gap: 8,
+  },
+  acceptButton: {
+    minHeight: 34,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: colors.success,
+  },
+  rejectButton: {
+    minHeight: 34,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(244,63,94,0.68)',
+  },
+  requestActionText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  friendChevron: {
+    color: colors.accent,
+    fontSize: 18,
+    fontWeight: '900',
+  },
   statsRow: {
     flexDirection: 'row',
     gap: 12,
@@ -472,6 +924,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
+  },
+  statCardPressed: {
+    borderColor: 'rgba(56,189,248,0.56)',
+    backgroundColor: 'rgba(56,189,248,0.12)',
   },
   statValue: {
     color: colors.text,

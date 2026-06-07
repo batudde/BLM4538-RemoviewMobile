@@ -6,7 +6,7 @@ import { colors } from '../theme/colors';
 type AuthCardProps = PropsWithChildren<{
   eyebrow: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
 }>;
 
 export function AuthCard({ eyebrow, title, subtitle, children }: AuthCardProps) {
@@ -14,7 +14,7 @@ export function AuthCard({ eyebrow, title, subtitle, children }: AuthCardProps) 
     <View style={styles.card}>
       <Text style={styles.eyebrow}>{eyebrow}</Text>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.subtitle}>{subtitle}</Text>
+      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       <View style={styles.body}>{children}</View>
     </View>
   );

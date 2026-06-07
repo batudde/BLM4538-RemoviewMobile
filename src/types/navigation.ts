@@ -15,4 +15,7 @@ export type RootStackParamList = {
   };
   AddFilm: undefined;
   Profile: undefined;
+  PublicProfile: {
+    username: string;
+  };
 };

@@ -13,6 +13,7 @@ export type FilmDetail = Film & {
     comment: string;
     createdAt: string;
     userId: number;
+    username: string;
   }>;
 };
 
@@ -42,6 +43,7 @@ export function mapFilmDetail(raw: Partial<FilmDetail> & Record<string, unknown>
             comment: typeof item.comment === 'string' ? item.comment : '',
             createdAt: typeof item.createdAt === 'string' ? item.createdAt : '',
             userId: typeof item.userId === 'number' ? item.userId : Number(item.userId ?? 0),
+            username: typeof item.username === 'string' ? item.username : '',
           };
         })
       : [],

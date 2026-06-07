@@ -2,6 +2,9 @@
 
 Proje Dokümanı (Repoda da mevcut): https://drive.google.com/file/d/1qMeciKfsvYu6Po6w2EM5qEiRwa8FSI8N/view?usp=sharing
 
+07.06.2026 - V10 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-07.06.2026-V10):
+https://youtu.be/nLgoK9NZacQ
+
 31.05.2026 - V9 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-31.05.2026-V9):
 https://youtu.be/9qa6XjCxiq8
 
@@ -26,6 +29,11 @@ https://youtu.be/PXCBP-Cj7lY
 28.03.2026 - V2 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-28.03.2026-V2): https://youtu.be/hmM4diUB1TU
 
 22.03.2026 - V1 Yapılanlar Video Linki (22290502-Batuhan Dede-IOS2 Dersi-22.03.2026-V1): https://youtu.be/qXAMpX2xh68
+
+07.06.2026 Tarihli 22290502-Batuhan Dede - IOS2 Dersi-07.06.2026-V10 Videosundaki İlerlemeler:
+Bu aşamada uygulamaya arkadaşlık sistemi eklendi. Kullanıcılar artık birbirini kullanıcı adıyla arayabiliyor, arkadaşlık isteği gönderebiliyor, gelen istekleri kabul veya reddedebiliyor, arkadaş listesini ve arkadaş profillerini görüntüleyebiliyor. Ayrıca arkadaş profillerinde favori filmler gösteriliyor, yorumlarda kullanıcı adı görünüyor ve arayüzdeki gereksiz açıklamalar temizlenerek uygulama daha gerçek bir sosyal film uygulaması haline getirildi.
+
+
 
 31.05.2026 Tarihli 22290502-Batuhan Dede - IOS2 Dersi-31.05.2026-V9 Videosundaki İlerlemeler:
 Bu bölümde projede kullanıcı profili güncelleme kısmını geliştirdim ve kullanıcı adı sistemini ekledim. Daha önce kullanıcı profili email üzerinden gösteriliyordu. Bu aşamada artık her kullanıcının kendine ait bir kullanıcı adı olmasını sağladım. Kullanıcı kayıt olurken email ve şifreye ek olarak kullanıcı adı da giriyor. Giriş yaparken ise sistem aynı şekilde email ve şifreyle çalışmaya devam ediyor. Aynı zamanda profil kısmında kullanıcıya ait kişisel bilgiler kısmı ekledim.
